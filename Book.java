@@ -1,38 +1,42 @@
 public class Book 
 {
     String name;
-    int year_release;
+    int yearRelease;
     String author;
-    int recommended_year;
+    int recommendedYear;
     double price;
 
-    public Book(String name, int year_release, String author, int recommended_year, double price) 
+    public Book(String name, int yearRelease, String author, int recommendedYear, double price) 
     {
         this.name = name;
-        this.year_release = year_release;
+        this.yearRelease = yearRelease;
         this.author = author;
-        this.recommended_year=recommended_year;
+        this.recommendedYear=recommendedYear;
         this.price = price;
     }
+
     @Override
     public String toString()
     {
         return String.format("Книга: \"%s\", рік видання: %d, Автор: \"%s\",рекомандований вік: %d, ціна: %.2f грн",
-                name, year_release, author, recommended_year, price);
+                name, yearRelease, author, recommendedYear, price);
     }
+
     public void applyDiscount()
     {
-        if (year_release <= 2007)
+        if (yearRelease <= 2007)
         {
             price = price * 1.05;
         }
     }
-    public boolean equalsBook(Book other)
+    @Override
+    public boolean equals(Object other)
     {
-        return this.name.equals(other.name)
-                && this.year_release == other.year_release
-                && this.author.equals(other.author)
-                && this.recommended_year == other.recommended_year
-                && this.price == other.price;
+        var book = (Book)other;
+        return this.name.equals(book.name)
+                && this.yearRelease == book.yearRelease
+                && this.author.equals(book.author)
+                && this.recommendedYear == book.recommendedYear
+                && this.price == book.price;
     }
 }

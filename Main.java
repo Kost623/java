@@ -4,19 +4,19 @@ public class Main
 {
     public static void main(String[] args)
     {
-        Scanner var1 = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
 
         IO.println("Якщо книжка 2007 року і старша, то ціна на 5% більша");
         IO.println("Введіть кількість книжок:");
 
-        int n = var1.nextInt();
-        var1.nextLine();
+        int n = scanner.nextInt();
+        scanner.nextLine();
 
         while (n < 1)
         {
             IO.println("Ви ввели некоректну кількість книжок, введіть повторно:");
-            n = var1.nextInt();
-            var1.nextLine();
+            n = scanner.nextInt();
+            scanner.nextLine();
         }
 
         Book[] books = new Book[n];
@@ -25,52 +25,52 @@ public class Main
         {
             IO.println("Книга #" + (i + 1));
             IO.println("Введіть назву книжки: ");
-            String name_cret = var1.nextLine();
+            String nameCret = scanner.nextLine();
             IO.println("Введіть рік випуску: ");
-            int year_release_cret = var1.nextInt();
-            var1.nextLine();
+            int yearReleaseCret = scanner.nextInt();
+            scanner.nextLine();
 
-            while (year_release_cret < 1450 || year_release_cret > 2026)
+            while (yearReleaseCret < 1450 || yearReleaseCret > 2026)
             {
                 IO.println("Некоректний рік (має бути між 1450 і 2026), введіть ще раз: ");
-                year_release_cret = var1.nextInt();
-                var1.nextLine();
+                yearReleaseCret = scanner.nextInt();
+                scanner.nextLine();
             }
             IO.println("Введіть автора: ");
-            String author_cret = var1.nextLine();
+            String authorCret = scanner.nextLine();
             IO.println("Введіть рекомендований вік: ");
-            int recommended_year_cret = var1.nextInt();
-            var1.nextLine();
+            int recommendedYearCret = scanner.nextInt();
+            scanner.nextLine();
 
-            while (recommended_year_cret < 0 || recommended_year_cret > 100)
+            while (recommendedYearCret < 0 || recommendedYearCret > 100)
             {
                 IO.println("Некоректний вік (має бути від 0 до 100), введіть ще раз: ");
-                recommended_year_cret = var1.nextInt();
-                var1.nextLine();
+                recommendedYearCret = scanner.nextInt();
+                scanner.nextLine();
             }
             IO.println("Введіть ціну книжки: ");
-            double price_cret = var1.nextDouble();
-            var1.nextLine();
+            double priceCret = scanner.nextDouble();
+            scanner.nextLine();
 
-            while (price_cret < 0)
+            while (priceCret < 0)
             {
                 IO.println("Ціна не може бути від'ємною, введіть ще раз: ");
-                price_cret = var1.nextDouble();
-                var1.nextLine();
+                priceCret = scanner.nextDouble();
+                scanner.nextLine();
             }
 
-            books[i] = new Book(name_cret, year_release_cret, author_cret, recommended_year_cret, price_cret);
+            books[i] = new Book(nameCret, yearReleaseCret, authorCret, recommendedYearCret, priceCret);
         }
 
         IO.println("Введіть кількість користувачів:");
-        int n_u = var1.nextInt();
-        var1.nextLine();
+        int n_u = scanner.nextInt();
+        scanner.nextLine();
 
         while (n_u < 1)
         {
             IO.println("Ви ввели некоректну кількість користувачів, введіть повторно:");
-            n_u = var1.nextInt();
-            var1.nextLine();
+            n_u = scanner.nextInt();
+            scanner.nextLine();
         }
 
             Reader[] readers = new Reader[n_u];
@@ -79,23 +79,23 @@ public class Main
         {
             IO.println("Читач #" + (i + 1));
             IO.println("Введіть ім'я читача: ");
-            String name_user_cret = var1.nextLine();
+            String nameUserCret = scanner.nextLine();
             IO.println("Введіть номер карти: ");
-            String card_number_cret = var1.nextLine();
+            String cardNumberCret = scanner.nextLine();
             IO.println("Введіть номер телефону: ");
-            String phone_number_cret = var1.nextLine();
+            String phoneNumberCret = scanner.nextLine();
             IO.println("Введіть рік народження: ");
-            int year_of_birth_cret = var1.nextInt();
-            var1.nextLine();
+            int yearOfBirthCret = scanner.nextInt();
+            scanner.nextLine();
 
-            while (year_of_birth_cret < 1900 || year_of_birth_cret > 2026)
+            while (yearOfBirthCret < 1900 || yearOfBirthCret > 2026)
             {
                 IO.println("Некоректний рік народження, введіть ще раз: ");
-                year_of_birth_cret = var1.nextInt();
-                var1.nextLine();
+                yearOfBirthCret = scanner.nextInt();
+                scanner.nextLine();
             }
 
-            readers[i] = new Reader(name_user_cret, card_number_cret, phone_number_cret, year_of_birth_cret);
+            readers[i] = new Reader(nameUserCret, cardNumberCret, phoneNumberCret, yearOfBirthCret);
         }
 
         IO.println("\nУсі читачі");
@@ -146,26 +146,26 @@ public class Main
             System.out.println(b);
         }
         //рівень 3
-        IO.println("\nВведіть дані книги для пошуку:");
+        IO.println("\n Введіть дані книги для пошуку:");
         IO.println("Назва: ");
-        String searchName = var1.nextLine();
+        String searchName = scanner.nextLine();
         IO.println("Рік випуску: ");
-        int searchYear = var1.nextInt();
-        var1.nextLine();
+        int searchYear = scanner.nextInt();
+        scanner.nextLine();
         IO.println("Автор: ");
-        String searchAuthor = var1.nextLine();
+        String searchAuthor = scanner.nextLine();
         IO.println("Рекомендований вік: ");
-        int searchAge = var1.nextInt();
-        var1.nextLine();
+        int searchAge = scanner.nextInt();
+        scanner.nextLine();
         IO.println("Ціна: ");
-        double searchPrice = var1.nextDouble();
-        var1.nextLine();
+        double searchPrice = scanner.nextDouble();
+        scanner.nextLine();
 
         Book sample = new Book(searchName, searchYear, searchAuthor, searchAge, searchPrice);
         int foundIndex = -1;
         for (int i = 0; i < books.length; i++)
         {
-            if (books[i].equalsBook(sample))
+            if (books[i].equals(sample))
             {
                 foundIndex = i;
                 break;
@@ -181,7 +181,7 @@ public class Main
             System.out.println("Книгу з такими даними не знайдено.");
         }
         //пероблиний кусочок з 1 лаби
-        IO.println("\nЗастосування знижки");
+        IO.println("\n Застосування знижки");
         for (Book b : books)
         {
             double oldPrice = b.price;

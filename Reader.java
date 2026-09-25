@@ -1,20 +1,20 @@
 public class Reader 
 {
-    String name_user;
-    String card_number;
-    String phone_number;
-    int year_of_birth;
+    String nameUser;
+    String cardNumber;
+    String phoneNumber;
+    int yearOfBirth;
 
-    public Reader(String name_user, String card_number, String phone_number, int year_of_birth) 
+    public Reader(String nameUser, String cardNumber, String phoneNumber, int yearOfBirth) 
     {
-        this.name_user = name_user;
-        this.card_number = card_number;
-        this.phone_number = phone_number;
-        this.year_of_birth = year_of_birth;
+        this.nameUser = nameUser;
+        this.cardNumber = cardNumber;
+        this.phoneNumber = phoneNumber;
+        this.yearOfBirth = yearOfBirth;
     }
     @Override
     public String toString() {
         return String.format("Ім'я читача: \"%s\", номер карт: \"%s\", номер телефйона: \"%s\", рік народження: %d",
-                name_user, card_number, phone_number, year_of_birth);
+                nameUser, cardNumber, phoneNumber, yearOfBirth);
     }
 }
