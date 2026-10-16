@@ -31,3 +31,21 @@ java Main
 javac *.java
 java Main
 ```
+
+## Лабораторна робота 3 — Обробка винятків
+
+### Реалізовано
+- Обробка стандартних винятків (`InputMismatchException`, `ArrayIndexOutOfBoundsException`, `ArithmeticException`) через конкретні catch-блоки
+- `finally` для гарантованого закриття Scanner і фінального повідомлення
+- Власний checked-виняток `DomainException` (базовий клас, extends Exception)
+- Підкласи `InvalidPriceException` та `InvalidAgeException` з додатковим полем некоректного значення
+- Валідація доменних правил безпосередньо в конструкторі `Book` (throw new ...)
+- Множинні catch-блоки в одному try, впорядковані від специфічних типів до загальних
+- Демонстрація re-throw: метод `createBook()` логує помилку і прокидає її далі
+- Демонстрація поліморфізму винятків: один catch(DomainException) перехоплює обидва підтипи
+
+### Компіляція та запуск
+```bash
+javac *.java
+java Main
+```
