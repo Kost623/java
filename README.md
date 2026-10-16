@@ -49,3 +49,52 @@ java Main
 javac *.java
 java Main
 ```
+
+## Лабораторна робота 4 — Реалізація програмних інтерфейсів мовою Java
+
+### Структура проєкту
+```
+task/java/
+├── Main.java                      (головний клас, точка входу)
+├── Class/
+│   ├── Book.java                  (книга — поля, конструктор, toString, equals)
+│   └── Reader.java                (читач — поля, конструктор, toString)
+├── Exceptions/
+│   ├── DomainException.java       (базовий checked-виняток домену)
+│   ├── InvalidAgeException.java   (виняток невірного віку)
+│   └── InvalidPriceException.java (виняток невірної ціни)
+├── Interfaces/
+│   ├── DiscountStrategy.java      (інтерфейс стратегії знижки з default-методом getDescription())
+│   ├── RegularDiscount.java       (знижка 5% для книг 2007 року і старше)
+│   ├── NewReleaseDiscount.java    (знижка 10% для новинок після 2007 року)
+│   ├── FirstLetterMatchDiscount.java (підвищення ціни на 50%, якщо перша буква імені читача збігається з першою буквою назви книги)
+│   └── Sortable.java              (інтерфейс сортування за ключем)
+├── Abstract/
+│   └── AbstractDiscountStrategy.java (абстрактний клас, імплементує DiscountStrategy частково: спільна валідація ціни та року)
+└── Context/
+    └── DiscountContext.java       (контекстний клас патерну Strategy — приймає стратегію через конструктор, має сетер для зміни в рантаймі, делегує виконання)
+```
+
+### Рівень 1 — Базовий (обов'язковий minimum)
+- Визначено поведінку, яка відрізняється у різних сутностях: стратегія розрахунку знижки для книги.
+- Описано цю поведінку у вигляді інтерфейсу `DiscountStrategy` з методом `applyDiscount(double price, int yearRelease)`.
+- Реалізовано дві різні реалізації інтерфейсу: `RegularDiscount` та `NewReleaseDiscount`.
+- Продемонстровано поліморфне використання: масив об'єктів типу `DiscountStrategy[]`, виклик методу у циклі, поведінка різна для різних реалізацій.
+
+### Рівень 2 — Середній
+- Додано `default`-метод `getDescription()` до інтерфейсу `DiscountStrategy` — успадковується усіма реалізаціями, може бути перевизначений.
+- Створено абстрактний клас `AbstractDiscountStrategy`, що імплементує `DiscountStrategy` частково (задає спільну логіку валідації ціни та року, але не реалізує саму формулу знижки). Конкретні класи (`RegularDiscount`, `NewReleaseDiscount`) наслідують його.
+- Клас `BookWithSort` реалізує кілька інтерфейсів одночасно: `DiscountStrategy` (бізнес-поведінка) та `Sortable` (сортування за ціною).
+- Додано функцію: якщо перша буква імені читача співпадає з першою буквою назви книги — ціна піднімається на 50% (`FirstLetterMatchDiscount`).
+
+### Рівень 3 — Високий (патерн Strategy)
+- Створено контекстний клас `DiscountContext`, який приймає інтерфейс-стратегію через конструктор.
+- Має сетер `setStrategy(DiscountStrategy)`, що дозволяє змінювати стратегію під час виконання програми (runtime), не створюючи новий об'єкт контексту.
+- Метод `executeDiscount(double price, int yearRelease)` делегує виконання поточній стратегії.
+- У `Main.java` продемонстровано зміну стратегії в рантаймі: `RegularDiscount` → `NewReleaseDiscount` → `FirstLetterMatchDiscount` на одній і тій ж книзі.
+
+### Компіляція та запуск
+```bash
+javac Main.java Class/*.java Exceptions/*.java Abstract/*.java Interfaces/*.java Context/*.java
+java Main
+```

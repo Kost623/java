@@ -1,6 +1,19 @@
 import java.util.Scanner;
 import java.util.InputMismatchException;
 
+import Class.Book;
+import Class.Reader;
+
+import Exceptions.DomainException;
+import Exceptions.InvalidPriceException;
+import Exceptions.InvalidAgeException;
+
+import Interfaces.DiscountStrategy;
+import Interfaces.RegularDiscount;
+import Interfaces.NewReleaseDiscount;
+import Interfaces.FirstLetterMatchDiscount;
+import Context.DiscountContext;
+
 public class Main 
 {
     public static void main(String[] args) 
@@ -32,17 +45,20 @@ public class Main
                 try 
                 {
                     books[i] = createBook(nameCret, yearReleaseCret, authorCret, recommendedYearCret, priceCret);
-                } catch (InvalidPriceException e) 
+                } 
+                catch (InvalidPriceException e) 
                 {
                     System.out.println(
                             "Помилка ціни: " + e.getMessage() + " (некоректне значення: " + e.getInvalidValue() + ")");
                     i--;
-                } catch (InvalidAgeException e) 
+                } 
+                catch (InvalidAgeException e) 
                 {
                     System.out.println(
                             "Помилка віку: " + e.getMessage() + " (некоректне значення: " + e.getInvalidValue() + ")");
                     i--;
-                } catch (DomainException e) 
+                } 
+                catch (DomainException e) 
                 {
                     System.out.println("Інша доменна помилка: " + e.getMessage());
                     i--;
@@ -175,31 +191,84 @@ public class Main
             {
                 System.out.println("Виникла непередбачена помилка: " + e.getMessage());
             }
-            // пероблиний кусочок з 1 лаби
-            IO.println("\n Застосування знижки");
-            for (Book b : books) 
+            // Лабораторна робота 4 — патерн Strategy (контекстний клас)
+            IO.println("\n Застосування знижок через контекстний клас (Strategy):");
+            Book demoBook = books[0];
+            DiscountContext context = new DiscountContext(new RegularDiscount());
+
+            System.out.println("Демонстраційна книга: " + demoBook);
+
+            // Стратегія 1 — RegularDiscount
+            double price1 = context.executeDiscount(demoBook.price, demoBook.yearRelease);
+            System.out.println("Стратегія: " + context.getStrategy().getClass().getSimpleName()
+                    + " — " + context.getStrategy().getDescription());
+            System.out.printf("Ціна: %.2f грн -> %.2f грн%n%n", demoBook.price, price1);
+
+            // Змінюємо стратегію під час виконання (runtime) на NewReleaseDiscount
+            context.setStrategy(new NewReleaseDiscount());
+            double price2 = context.executeDiscount(demoBook.price, demoBook.yearRelease);
+            System.out.println("Стратегія змінена на: " + context.getStrategy().getClass().getSimpleName()
+                    + " — " + context.getStrategy().getDescription());
+            System.out.printf("Ціна: %.2f грн -> %.2f грн%n%n", demoBook.price, price2);
+
+            // Змінюємо стратегію під час виконання на FirstLetterMatchDiscount
+            context.setStrategy(new FirstLetterMatchDiscount(null));
+            double price3 = context.executeDiscount(demoBook.price, demoBook.yearRelease);
+            System.out.println("Стратегія змінена на: " + context.getStrategy().getClass().getSimpleName()
+                    + " — " + context.getStrategy().getDescription());
+            System.out.printf("Ціна: %.2f грн -> %.2f грн%n%n", demoBook.price, price3);
+
+            // Застосування всіх стратегій до всіх книг (поліморфізм)
+            IO.println("\n Застосування всіх стратегій до всіх книг:");
+            DiscountStrategy[] strategies = new DiscountStrategy[3];
+            strategies[0] = new RegularDiscount();
+            strategies[1] = new NewReleaseDiscount();
+            strategies[2] = new FirstLetterMatchDiscount(null);
+
+            for (DiscountStrategy ds : strategies)
             {
-                double oldPrice = b.price;
-                System.out.println("До застосування знижки:");
-                System.out.println(b);
-
-                b.applyDiscount();
-
-                System.out.println("Після застосування знижки:");
-                System.out.println(b);
-
-                double difference = b.price - oldPrice;
-                String sign;
-                if (difference >= 0)
+                IO.println("Стратегія: " + ds.getClass().getSimpleName() + " — " + ds.getDescription());
+                for (Book b : books) 
                 {
-                    sign = "+";
+                    double oldPrice = b.price;
+                    System.out.println("До застосування знижки:");
+                    System.out.println(b);
+
+                    b.price = ds.applyDiscount(b.price, b.yearRelease);
+
+                    System.out.println("Після застосування знижки:");
+                    System.out.println(b);
+
+                    double difference = b.price - oldPrice;
+                    String sign;
+                    if (difference >= 0)
+                    {
+                        sign = "+";
+                    }
+                    else
+                    {
+                        sign = "-";
+                    }
+                    System.out.printf("Різниця: %.2f грн -> %.2f грн (зміна: %s%.2f грн)%n%n",
+                            oldPrice, b.price, sign, difference);
                 }
-                else
+            }
+
+            // Функція: якщо перша буква імені читача співпадає з першою буквою назви книги — ціна піднімається на 50%
+            IO.println("\n Функція збігу першої букви імені читача та назви книги:");
+            for (Reader r : readers)
+            {
+                FirstLetterMatchDiscount matchDiscount = new FirstLetterMatchDiscount(r.nameUser);
+                for (Book b : books)
                 {
-                    sign = "-";
+                    if (matchDiscount.isMatch(b.name))
+                    {
+                        double oldPrice = b.price;
+                        b.price = matchDiscount.applyPriceIncrease(b.price);
+                        System.out.println("Читач: \"" + r.nameUser + "\", книга: \"" + b.name + "\"");
+                        System.out.printf("Ціна збільшена на 50%%: %.2f грн -> %.2f грн%n%n", oldPrice, b.price);
+                    }
                 }
-                System.out.printf("Різниця: %.2f грн -> %.2f грн (зміна: %s%.2f грн)%n%n",
-                        oldPrice, b.price, sign, difference);
             }
         } 
         finally
@@ -288,7 +357,8 @@ public class Main
         try 
         {
             return new Book(name, yearRelease, author, recommendedYear, price);
-        } catch (DomainException e) {
+        } 
+        catch (DomainException e) {
             System.out.println("[LOG] Помилка при створенні книги: " + e.getMessage());
             throw e; // обробили частково (залогували), прокидаємо далі для обробки на вищому рівні
         }
