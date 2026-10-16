@@ -1,3 +1,5 @@
+package Exceptions;
+
 public class InvalidPriceException extends DomainException
 {
     private double invalidValue;

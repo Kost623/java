@@ -1,10 +1,16 @@
+package Class;
+
+import Exceptions.DomainException;
+import Exceptions.InvalidPriceException;
+import Exceptions.InvalidAgeException;
+
 public class Book
 {
-    String name;
-    int yearRelease;
-    String author;
-    int recommendedYear;
-    double price;
+    public String name;
+    public int yearRelease;
+    public String author;
+    public int recommendedYear;
+    public double price;
 
     public Book(String name, int yearRelease, String author, int recommendedYear, double price) throws DomainException
     {
@@ -29,14 +35,6 @@ public class Book
     {
         return String.format("Книга: \"%s\", рік видання: %d, Автор: \"%s\", рекомендований вік: %d, ціна: %.2f грн",
                 name, yearRelease, author, recommendedYear, price);
-    }
-
-    public void applyDiscount()
-    {
-        if (yearRelease <= 2007)
-        {
-            price = price * 1.05;
-        }
     }
 
     @Override
