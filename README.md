@@ -93,8 +93,60 @@ task/java/
 - Метод `executeDiscount(double price, int yearRelease)` делегує виконання поточній стратегії.
 - У `Main.java` продемонстровано зміну стратегії в рантаймі: `RegularDiscount` → `NewReleaseDiscount` → `FirstLetterMatchDiscount` на одній і тій ж книзі.
 
-### Компіляція та запуск
+### Лабораторна робота 5 — Рефакторинг з патернами проєктування
+
+#### Рівень 1 — Factory Method
+
+**Проблема:** об'єкти стратегій знижок створювалися прямими викликами `new` у кількох місцях `Main.java`. Додавання нового типу знижки вимагало правки кожного такого місця.
+
+**Рішення:** винесено логіку створення в клас-фабрику `Factory.DiscountFactory`:
+- `createDiscount(String type)` — повертає `DiscountStrategy` за кодом типу (`REGULAR`, `NEW_RELEASE`, `FIRST_LETTER`).
+- `createFirstLetterDiscount(String readerName)` — створює стратегію для конкретного читача.
+- Усі прямий `new` у `Main.java` замінено на виклики фабрики.
+
+Тепер додавання нового типу знижки вимагає правки лише в одному місці — у `DiscountFactory`.
+
+#### Рівень 2 — Observer + JSON-логування
+
+**Проблема:** зміна стану книги (ціни, кількості, статусу) повинна сповіщати інші частини системи (консольний лог, файл логів).
+
+**Рішення:** реалізовано патерн Observer:
+- Інтерфейс `Observer.LibraryObserver` з методом `update(String event, Object source)`.
+- Клас-суб'єкт `Observer.LibrarySubject` зі списком підписників і методом `notifyObservers`.
+- Два спостерігачі: `ConsoleLoggerObserver` (вивід у консоль) і `FileJsonLoggerObserver` (запис у JSON).
+- Клас `Controller.LogController` керує записом у файл `Logs/LogJava.json`:
+  - створює папку `Logs/` при потребі;
+  - якщо файл `LogJava.json` вже існує — дописує нові записи;
+  - кожен запис містить: `timestamp`, `event`, `bookName`, `oldPrice`, `newPrice`, `oldNumber`, `newNumber`, `oldStatus`, `newStatus`.
+
+**Додаткові поля у `Book`:** `status` (В наявності / Закінчився), `number` (кількість екземплярів), `isbn`, `genre`, `publisher`, `rating` (0.0–5.0). Статус оновлюється автоматично при зміні кількості.
+
+**Додаткові поля у `Reader`:** `email`, `registrationDate`, `isActive`.
+
+**Валідація (клас `Exceptions.Validator`):**
+- Телефон: має містити принаймні 7 цифр, дозволені символи `+`, `-`, `(`, `)`, пробіли.
+- Email: має містити `@`, точку після `@`, не починатися ani не закінчуватися на `@` або `.`.
+
+У `Main.java` додано цикли повторного введення для телефону та email, якщо формат невірний.
+
+#### Рівень 3 — Adapter (Високий)
+
+**Проблема:** у нас є ззовнішній/застарілий клас `Legacy.LegacyBookCatalog` із власними методами (`addLegacyBook`, `getLegacyCost`, `listAllLegacyTitles`), які не відповідають інтерфейсу, очікуваному нашим кодом (`BookCatalog`). Ми не можемо змінювати цей клас, бо це "зовнішня бібліотека".
+
+**Рішення:** реалізовано патерн Adapter:
+- Клас `Adapter.LegacyBookCatalogAdapter implements BookCatalog` огортає `LegacyBookCatalog` і перекладає виклики:
+  - `addBook(Book)` → `addLegacyBook(title, year, cost)`
+  - `getPrice(String)` → `getLegacyCost(String)`
+  - `getAllBooks()` → перетворює `String[]` з `listAllLegacyTitles()` у `List<Book>`
+- Сам `LegacyBookCatalog` не змінювався.
+
+**Чому саме Adapter, а не переписування класу:**
+- Клас належить сторонній бібліотеці — немає доступу до вихідного коду або це порушить інкапсуляцію.
+- Переписування вимагало б змін у всіх місцях, де цей клас вже використовується зі своїм старим API.
+- Адаптер дозволяє використовувати ззовнішній клас через зручний для нас інтерфейс без змін у самому класі.
+
+#### Компіляція та запуск
 ```bash
-javac Main.java Class/*.java Exceptions/*.java Abstract/*.java Interfaces/*.java Context/*.java
+javac Main.java Class/*.java Exceptions/*.java Abstract/*.java Interfaces/*.java Context/*.java Factory/*.java Observer/*.java Controller/*.java Legacy/*.java Adapter/*.java
 java Main
 ```
