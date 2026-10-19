@@ -1,3 +1,5 @@
+package Exceptions;
+
 public class InvalidAgeException extends DomainException
 {
     private int invalidValue;

@@ -1,11 +1,13 @@
-public class Reader 
-{
-    String nameUser;
-    String cardNumber;
-    String phoneNumber;
-    int yearOfBirth;
+package Class;
 
-    public Reader(String nameUser, String cardNumber, String phoneNumber, int yearOfBirth) 
+public class Reader
+{
+    public String nameUser;
+    public String cardNumber;
+    public String phoneNumber;
+    public int yearOfBirth;
+
+    public Reader(String nameUser, String cardNumber, String phoneNumber, int yearOfBirth)
     {
         this.nameUser = nameUser;
         this.cardNumber = cardNumber;
