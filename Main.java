@@ -7,12 +7,19 @@ import Class.Reader;
 import Exceptions.DomainException;
 import Exceptions.InvalidPriceException;
 import Exceptions.InvalidAgeException;
+import Exceptions.Validator;
 
 import Interfaces.DiscountStrategy;
-import Interfaces.RegularDiscount;
-import Interfaces.NewReleaseDiscount;
 import Interfaces.FirstLetterMatchDiscount;
 import Context.DiscountContext;
+import Factory.DiscountFactory;
+import Observer.LibrarySubject;
+import Observer.LibraryObserver;
+import Observer.ConsoleLoggerObserver;
+import Observer.FileJsonLoggerObserver;
+import Adapter.BookCatalog;
+import Adapter.LegacyBookCatalogAdapter;
+import Legacy.LegacyBookCatalog;
 
 public class Main 
 {
@@ -41,10 +48,18 @@ public class Main
                 int recommendedYearCret = readIntRange(scanner, "Введіть рекомендований вік: ", 0, 100);
 
                 double priceCret = readDoubleMin(scanner, "Введіть ціну книжки: ", 0.0);
+                int numberCret = readIntMin(scanner, "Введіть кількість книг:", 0);
+                IO.println("Введіть ISBN: ");
+                String isbnCret = scanner.nextLine();
+                IO.println("Введіть жанр: ");
+                String genreCret = scanner.nextLine();
+                IO.println("Введіть видавця: ");
+                String publisherCret = scanner.nextLine();
+                double ratingCret = readDoubleMin(scanner, "Введіть рейтинг (0.0-5.0): ", 0.0);
 
                 try 
                 {
-                    books[i] = createBook(nameCret, yearReleaseCret, authorCret, recommendedYearCret, priceCret);
+                    books[i] = createBook(nameCret, yearReleaseCret, authorCret, recommendedYearCret, priceCret, numberCret, isbnCret, genreCret, publisherCret, ratingCret);
                 } 
                 catch (InvalidPriceException e) 
                 {
@@ -65,6 +80,13 @@ public class Main
                 }
             }
 
+            // Лабораторна робота 5 — Observer: створюємо суб'єкт та підписуємо двох спостерігачів
+            LibrarySubject librarySubject = new LibrarySubject();
+            LibraryObserver consoleObserver = new ConsoleLoggerObserver("Бібліотека-Консоль");
+            LibraryObserver fileObserver = new FileJsonLoggerObserver("Бібліотека-Файл");
+            librarySubject.subscribe(consoleObserver);
+            librarySubject.subscribe(fileObserver);
+
             int n_u = readIntMin(scanner, "Введіть кількість користувачів:", 1);
 
             Reader[] readers = new Reader[n_u];
@@ -78,10 +100,27 @@ public class Main
                 String cardNumberCret = scanner.nextLine();
                 IO.println("Введіть номер телефону: ");
                 String phoneNumberCret = scanner.nextLine();
+                while (!Validator.isValidPhone(phoneNumberCret))
+                {
+                    System.out.println("Невірний формат телефону. Введіть ще раз: ");
+                    phoneNumberCret = scanner.nextLine();
+                }
+                IO.println("Введіть email: ");
+                String emailCret = scanner.nextLine();
+                while (!Validator.isValidEmail(emailCret))
+                {
+                    System.out.println("Невірний формат email. Введіть ще раз: ");
+                    emailCret = scanner.nextLine();
+                }
+                IO.println("Введіть дату реєстрації (Наприклад: 2026-01-15): ");
+                String registrationDateCret = scanner.nextLine();
+                IO.println("Чи активний читач? (true/false): ");
+                boolean isActiveCret = scanner.nextBoolean();
+                scanner.nextLine();
 
                 int yearOfBirthCret = readIntRange(scanner, "Введіть рік народження: ", 1900, 2026);
 
-                readers[i] = new Reader(nameUserCret, cardNumberCret, phoneNumberCret, yearOfBirthCret);
+                readers[i] = new Reader(nameUserCret, cardNumberCret, phoneNumberCret, yearOfBirthCret, emailCret, registrationDateCret, isActiveCret);
             }
 
             IO.println("\nУсі читачі");
@@ -140,10 +179,18 @@ public class Main
             String searchAuthor = scanner.nextLine();
             int searchAge = readIntRange(scanner, "Рекомендований вік: ", 0, 100);
             double searchPrice = readDoubleMin(scanner, "Ціна: ", 0.0);
+            int searchNumber = readIntMin(scanner, "Кількість книг: ", 0);
+            IO.println("ISBN: ");
+            String searchIsbn = scanner.nextLine();
+            IO.println("Жанр: ");
+            String searchGenre = scanner.nextLine();
+            IO.println("Видавця: ");
+            String searchPublisher = scanner.nextLine();
+            double searchRating = readDoubleMin(scanner, "Рейтинг: ", 0.0);
 
             try
             {
-                Book sample = createBook(searchName, searchYear, searchAuthor, searchAge, searchPrice);
+                Book sample = createBook(searchName, searchYear, searchAuthor, searchAge, searchPrice, searchNumber, searchIsbn, searchGenre, searchPublisher, searchRating);
                 int foundIndex = -1;
                 for (int i = 0; i < books.length; i++)
                 {
@@ -191,28 +238,28 @@ public class Main
             {
                 System.out.println("Виникла непередбачена помилка: " + e.getMessage());
             }
-            // Лабораторна робота 4 — патерн Strategy (контекстний клас)
+            // Лабораторна робота 5 — фабрика об'єктів стратегій знижок (Factory Method)
             IO.println("\n Застосування знижок через контекстний клас (Strategy):");
             Book demoBook = books[0];
-            DiscountContext context = new DiscountContext(new RegularDiscount());
+            DiscountContext context = new DiscountContext(DiscountFactory.createDiscount("REGULAR"));
 
             System.out.println("Демонстраційна книга: " + demoBook);
 
-            // Стратегія 1 — RegularDiscount
+            // Стратегія 1 — RegularDiscount (через фабрику)
             double price1 = context.executeDiscount(demoBook.price, demoBook.yearRelease);
             System.out.println("Стратегія: " + context.getStrategy().getClass().getSimpleName()
                     + " — " + context.getStrategy().getDescription());
             System.out.printf("Ціна: %.2f грн -> %.2f грн%n%n", demoBook.price, price1);
 
             // Змінюємо стратегію під час виконання (runtime) на NewReleaseDiscount
-            context.setStrategy(new NewReleaseDiscount());
+            context.setStrategy(DiscountFactory.createDiscount("NEW_RELEASE"));
             double price2 = context.executeDiscount(demoBook.price, demoBook.yearRelease);
             System.out.println("Стратегія змінена на: " + context.getStrategy().getClass().getSimpleName()
                     + " — " + context.getStrategy().getDescription());
             System.out.printf("Ціна: %.2f грн -> %.2f грн%n%n", demoBook.price, price2);
 
             // Змінюємо стратегію під час виконання на FirstLetterMatchDiscount
-            context.setStrategy(new FirstLetterMatchDiscount(null));
+            context.setStrategy(DiscountFactory.createDiscount("FIRST_LETTER"));
             double price3 = context.executeDiscount(demoBook.price, demoBook.yearRelease);
             System.out.println("Стратегія змінена на: " + context.getStrategy().getClass().getSimpleName()
                     + " — " + context.getStrategy().getDescription());
@@ -221,9 +268,9 @@ public class Main
             // Застосування всіх стратегій до всіх книг (поліморфізм)
             IO.println("\n Застосування всіх стратегій до всіх книг:");
             DiscountStrategy[] strategies = new DiscountStrategy[3];
-            strategies[0] = new RegularDiscount();
-            strategies[1] = new NewReleaseDiscount();
-            strategies[2] = new FirstLetterMatchDiscount(null);
+            strategies[0] = DiscountFactory.createDiscount("REGULAR");
+            strategies[1] = DiscountFactory.createDiscount("NEW_RELEASE");
+            strategies[2] = DiscountFactory.createDiscount("FIRST_LETTER");
 
             for (DiscountStrategy ds : strategies)
             {
@@ -258,7 +305,7 @@ public class Main
             IO.println("\n Функція збігу першої букви імені читача та назви книги:");
             for (Reader r : readers)
             {
-                FirstLetterMatchDiscount matchDiscount = new FirstLetterMatchDiscount(r.nameUser);
+                FirstLetterMatchDiscount matchDiscount = DiscountFactory.createFirstLetterDiscount(r.nameUser);
                 for (Book b : books)
                 {
                     if (matchDiscount.isMatch(b.name))
@@ -269,6 +316,54 @@ public class Main
                         System.out.printf("Ціна збільшена на 50%%: %.2f грн -> %.2f грн%n%n", oldPrice, b.price);
                     }
                 }
+            }
+
+            // Лабораторна робота 5 — Observer: демонстрація сповіщення при зміні стану книги
+            IO.println("\n Демонстрація Observer — зміна стану книги:");
+            if (books.length > 0)
+            {
+                Book demo = books[0];
+                double oldPrice = demo.price;
+                int oldNumber = demo.number;
+                String oldStatus = demo.status;
+
+                // Змінюємо ціну та кількість
+                try
+                {
+                    demo.setPrice(oldPrice * 0.9);
+                }
+                catch (DomainException e)
+                {
+                    System.out.println("Помилка зміни ціни: " + e.getMessage());
+                }
+                demo.setNumber(oldNumber - 1);
+
+                // Сповіщаємо спостерігачів
+                librarySubject.notifyObservers("BOOK_STATE_CHANGED", demo);
+
+                System.out.println("Книга оновлена: " + demo);
+                System.out.println("Старе значення: ціна=" + oldPrice + ", кількість=" + oldNumber + ", статус=" + oldStatus);
+                System.out.println("Нове значення: ціна=" + demo.price + ", кількість=" + demo.number + ", статус=" + demo.status);
+            }
+            else
+            {
+                IO.println("Немає книг для демонстрації Observer.");
+            }
+
+            // Лабораторна робота 5 — Рівень 3: 패терн Adapter
+            IO.println("\n Демонстрація Adapter — інтеграція з зовнішнім каталогом LegacyBookCatalog:");
+            LegacyBookCatalog legacyCatalog = new LegacyBookCatalog();
+            BookCatalog catalog = new LegacyBookCatalogAdapter(legacyCatalog);
+
+            if (books.length > 0)
+            {
+                catalog.addBook(books[0]);
+                System.out.println("Вартість книги за адаптером: " + catalog.getPrice(books[0].name));
+                System.out.println("Кількість книг у каталозі: " + catalog.getAllBooks().size());
+            }
+            else
+            {
+                IO.println("Немає книг для додавання через адаптер.");
             }
         } 
         finally
@@ -351,12 +446,13 @@ public class Main
         }
     }
 
-    private static Book createBook(String name, int yearRelease, String author, int recommendedYear, double price)
+    private static Book createBook(String name, int yearRelease, String author, int recommendedYear, double price, int number,
+                                   String isbn, String genre, String publisher, double rating)
             throws DomainException 
             {
         try 
         {
-            return new Book(name, yearRelease, author, recommendedYear, price);
+            return new Book(name, yearRelease, author, recommendedYear, price, number, isbn, genre, publisher, rating);
         } 
         catch (DomainException e) {
             System.out.println("[LOG] Помилка при створенні книги: " + e.getMessage());
