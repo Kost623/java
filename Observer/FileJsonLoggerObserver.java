@@ -26,16 +26,17 @@ public class FileJsonLoggerObserver implements LibraryObserver
         String oldStatus = "невідомо";
         String newStatus = "невідомо";
 
+        // source може бути Book або будь-яким його підкласом (PrintedBook, EBook, AudioBook)
         if (source instanceof Book)
         {
             Book book = (Book) source;
-            bookName = book.name;
-            newPrice = book.price;
-            oldPrice = book.price;
-            newNumber = book.number;
-            oldNumber = book.number;
-            newStatus = book.status;
-            oldStatus = book.status;
+            bookName = book.getName();
+            newPrice = book.getPrice();
+            oldPrice = book.getPrice();
+            newNumber = book.getNumber();
+            oldNumber = book.getNumber();
+            newStatus = book.getStatus();
+            oldStatus = book.getStatus();
         }
 
         logController.writeLog(event, bookName, oldPrice, newPrice, oldNumber, newNumber, oldStatus, newStatus);

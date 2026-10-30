@@ -5,9 +5,7 @@ import Interfaces.RegularDiscount;
 import Interfaces.NewReleaseDiscount;
 import Interfaces.FirstLetterMatchDiscount;
 
-/*Фабрика створення об'єктів стратегій знижок.
-Виносить логіку створення об'єктів одного сімейства з клієнтського коду в одне місце,
-щоб уникнути прямих викликів new у кількох різних місцях програми.*/
+
 public class DiscountFactory
 {
     /*Створює об'єкт стратегії знижки за заданним типом (кодом).*/
