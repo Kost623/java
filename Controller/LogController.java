@@ -10,9 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-/*Контролер логів.
-Створює папку Logs/ при потребі, пише записи у LogJava.json у стандартному JSON-форматі.
-Якщо файл вже існує — дописує нові записи до існуючого вмісту.*/
+
 public class LogController
 {
     private static final String LOG_DIR = "Logs";

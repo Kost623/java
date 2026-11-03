@@ -1,6 +1,7 @@
 package Adapter;
 
 import Class.Book;
+import Class.LegacyBook;
 import Legacy.LegacyBookCatalog;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,8 @@ public class LegacyBookCatalogAdapter implements BookCatalog
     @Override
     public void addBook(Book book)
     {
-        legacyCatalog.addLegacyBook(book.name, book.yearRelease, book.price);
+        // book може бути будь-яким підкласом: PrintedBook, Textbook, EBook, AudioBook
+        legacyCatalog.addLegacyBook(book.getName(), book.getYearRelease(), book.getPrice());
     }
 
     @Override
@@ -37,7 +39,8 @@ public class LegacyBookCatalogAdapter implements BookCatalog
         {
             try
             {
-                books.add(new Book(title, 0, "Невідомо", 0, 0.0, 0, "Невідомо", "Невідомо", "Невідомо", 0.0));
+                // Легасі-каталог не зберігає формат, тому записи відновлюємо як LegacyBook
+                books.add(new LegacyBook(title));
             }
             catch (Exception e)
             {
