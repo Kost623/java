@@ -8,7 +8,7 @@ import java.util.Objects;
 
 /*Запечатаний абстрактний базовий клас: «просто книги» без формату в бібліотеці не буває,
 а нових форматів поза переліком permits бути не може.*/
-public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyBook
+public abstract sealed class Book extends BaseEntity permits PrintedBook, EBook, AudioBook, LegacyBook
 {
     protected static final String UNKNOWN = "не вказано";
 
@@ -28,7 +28,6 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
         }
     }
 
-    private String name;
     private int yearRelease;
     private String author;
     private int recommendedYear;
@@ -44,6 +43,8 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
     protected Book(String name, int yearRelease, String author, int recommendedYear, double price, int number,
                    String isbn, String genre, String publisher, double rating) throws DomainException
     {
+        super(nextId(), name); // id видає BaseEntity, назва зберігається в BaseEntity
+
         if (price < 0)
         {
             throw new InvalidPriceException("Ціна книги не може бути від'ємною", price);
@@ -61,7 +62,6 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
             throw new IllegalArgumentException("Рейтинг книги має бути від 0.0 до 5.0: " + rating);
         }
 
-        this.name = name;
         this.yearRelease = yearRelease;
         this.author = author;
         this.recommendedYear = recommendedYear;
@@ -88,8 +88,7 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
         return number > 0 ? "В наявності" : "Закінчився";
     }
 
-    // ---------- Геттери ----------
-    public String getName() { return name; }
+    // ---------- Геттери (getId() і getName() успадковано від BaseEntity) ----------
     public int getYearRelease() { return yearRelease; }
     public String getAuthor() { return author; }
     public int getRecommendedYear() { return recommendedYear; }
@@ -135,16 +134,17 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
     // ---------- final: єдиний формат короткого опису для логів і каталогів, підкласи його не змінюють ----------
     public final String getShortInfo()
     {
-        return "[" + getFormatName() + "] " + name + " (" + yearRelease + ")";
+        return "[" + getFormatName() + "] " + getName() + " (" + yearRelease + ")";
     }
 
     @Override
     public String toString()
     {
         return String.format("Книга: \"%s\", рік видання: %d, Автор: \"%s\", рекомендований вік: %d, ціна: %.2f грн, кількість: %d, статус: %s, ISBN: \"%s\", жанр: \"%s\", видавець: \"%s\", рейтинг: %.1f",
-                name, yearRelease, author, recommendedYear, price, number, status, isbn, genre, publisher, rating);
+                getName(), yearRelease, author, recommendedYear, price, number, status, isbn, genre, publisher, rating);
     }
 
+    // id в equals не входить: порівнюємо значення (ЛР2: пошук за зразком), а не ідентичність запису в сервісі
     // equals через getClass(): книги різних підкласів ніколи не рівні, тому симетрія зберігається
     @Override
     public boolean equals(Object other)
@@ -153,7 +153,7 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
         if (other == null || getClass() != other.getClass()) return false;
 
         var book = (Book) other;
-        return this.name.equals(book.name)
+        return getName().equals(book.getName())
                 && this.yearRelease == book.yearRelease
                 && this.author.equals(book.author)
                 && this.recommendedYear == book.recommendedYear
@@ -171,6 +171,6 @@ public abstract sealed class Book permits PrintedBook, EBook, AudioBook, LegacyB
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, yearRelease, author, isbn);
+        return Objects.hash(getName(), yearRelease, author, isbn);
     }
 }

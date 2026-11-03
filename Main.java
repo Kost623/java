@@ -79,6 +79,9 @@ public class Main
                     case "15" -> run(() -> demoConstructorChain());
                     case "16" -> run(() -> demoEquality());
                     case "17" -> run(() -> demoComposition());
+                    case "18" -> run(() -> CrudDemo.run());
+                    case "19" -> run(() -> SortingDemo.run());
+                    case "20" -> run(() -> GenericsDemo.run());
                     case "0"  -> running = false;
                     default   -> System.out.println("Невідомий пункт меню: " + choice);
                 }
@@ -112,6 +115,9 @@ public class Main
         System.out.println("15 - ЛР6: ланцюжок конструкторів і this(...)");
         System.out.println("16 - ЛР6: equals/hashCode, симетрія (getClass проти instanceof)");
         System.out.println("17 - ЛР6: наслідування чи композиція (Library)");
+        System.out.println("18 - ЛР7-9: CRUD-сервіс, рівень 1 (BaseEntity, InMemoryCrudService)");
+        System.out.println("19 - ЛР7-9: сортування, рівень 2 (Comparator, BookService, ReaderService)");
+        System.out.println("20 - ЛР7-9: узагальнення, рівень 3 (findAllSorted, wildcard, printAll)");
         System.out.println(" 0 - Вихід");
         System.out.print("Ваш вибір: ");
     }
@@ -513,7 +519,7 @@ public class Main
         boolean anyMatch = false;
         for (Reader r : readers)
         {
-            FirstLetterMatchDiscount matchDiscount = DiscountFactory.createFirstLetterDiscount(r.nameUser);
+            FirstLetterMatchDiscount matchDiscount = DiscountFactory.createFirstLetterDiscount(r.getName());
             for (Book b : books)
             {
                 if (matchDiscount.isMatch(b.getName()))
@@ -529,7 +535,7 @@ public class Main
                         System.out.println("Не вдалося змінити ціну: " + e.getMessage());
                         continue;
                     }
-                    System.out.println("Читач: \"" + r.nameUser + "\", книга: \"" + b.getName() + "\"");
+                    System.out.println("Читач: \"" + r.getName() + "\", книга: \"" + b.getName() + "\"");
                     System.out.printf("Ціна збільшена на 50%%: %.2f грн -> %.2f грн%n%n", oldPrice, b.getPrice());
                 }
             }
