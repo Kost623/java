@@ -1,4 +1,3 @@
-package test;
 
 import Class.Book;
 import Class.Reader;

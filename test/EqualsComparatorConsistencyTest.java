@@ -1,4 +1,3 @@
-package test;
 
 import Class.Reader;
 import Service.InMemoryReaderService;

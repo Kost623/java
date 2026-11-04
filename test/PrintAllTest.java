@@ -1,4 +1,3 @@
-package test;
 
 import Class.BaseEntity;
 import Class.Book;

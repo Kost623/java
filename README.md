@@ -405,3 +405,24 @@ List<Book> cannot be converted to List<BaseEntity>`). Інакше через п
 саме `Collection`, а не `List`, бо метод лише обходить елементи. Варіант
 `<E extends BaseEntity> void printAll(Collection<E>)` рівноцінний, але тип `E` більше ніде не
 використовується, тому wildcard простіший.
+
+   ### Тести
+
+   53 тести JUnit 5 покривають усі три рівні: `BaseEntity` (id, `equals`/`hashCode`),
+   `EntityNotFoundException`, `InMemoryCrudService` (save, оновлення без росту, delete,
+   findById), сортування (`findAllSorted`, `findAllSortedByName`, `...ByNameAndBy<Поле>`,
+   незмінність сховища, `Comparator<? super T>`, український порядок), узгодженість
+   компаратора з `equals` та `printAll`.
+
+   Запуск (потрібен JUnit Platform Console Standalone в папці `lib/`):
+
+   ```bash
+   mkdir -p lib
+   curl -L -o lib/junit-platform-console-standalone-1.10.2.jar \
+     https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar
+   ./run-tests.sh
+   ```
+
+   Помилки компіляції, на які посилається README (інваріантність `List<Book>` проти
+   `List<BaseEntity>`, відхилення `Comparator<BaseEntity>` при `Comparator<T>`), звичайним
+   тестом не перевіряються, бо такий код не збирається; їх я перевірив компілятором окремо.

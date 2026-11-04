@@ -1,4 +1,3 @@
-package test;
 
 import Exceptions.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
