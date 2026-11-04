@@ -265,3 +265,164 @@ class»). Ще компілятор вимагає, щоб гілка підти
 (`PrintedBook`), інакше вона недосяжна (dominance). Ціна: підкласи мусять лежати в тому ж
 пакеті, тому приватний `LegacyBook` з адаптера переїхав у пакет `Class`. Матеріали:
 <https://docs.oracle.com/en/java/javase/21/language/sealed-classes-and-interfaces.html>
+
+
+
+## Лабораторна робота 7-9 — типізований CRUD-сервіс
+
+### Рівень 1
+
+**BaseEntity.** Абстрактний клас із `long id` і `String name` (обидва `final`, гетери,
+конструктор). Поле `id` не змінюється після створення. Id видає лічильник у `BaseEntity`
+(`nextId()`), тому сутності отримують унікальні id автоматично; якщо валідація в конструкторі
+`Book` не проходить, номер із лічильника втрачається, і це не заважає. Сутності `Book`
+(з ієрархією `PrintedBook`, `EBook`, `AudioBook`, `Textbook`, `LegacyBook`) і `Reader`
+успадковують `BaseEntity`. Поле `Reader.nameUser` замінено на `getName()`. `equals()` у `Book`
+не бере до уваги `id`: порівнюються значення для пошуку за зразком (ЛР2), а не ідентичність
+запису в сервісі.
+
+**EntityNotFoundException — перевірений виняток (`extends Exception`).** Відсутність
+сутності за id це очікувана, відновлювана ситуація (користувач ввів хибний id), а не
+помилка програмування. Перевірений виняток змушує викликача явно її обробити: повідомити
+користувача, запросити id ще раз. Це узгоджується з ЛР3, де доменні помилки теж перевірені.
+Ціна: `throws` у сигнатурі й незручність у lambda/stream, але для рідкого виклику
+`findById` вона прийнятна. Виняток зберігає `id` (`getId()`) і містить у повідомленні
+назву сутності та id. Для `delete` виняток не потрібен: якщо запису вже немає, мету
+видалення досягнуто, тому метод повертає `boolean` (`true`: запис існував і видалений).
+
+**Навіщо `T extends BaseEntity`.** Сервісу потрібно ідентифікувати сутність: ключ у
+`Map<Long, T>` це `entity.getId()`, і саме так `save` розрізняє «додати» й «оновити».
+Без обмеження `T` вважається просто `Object`, у якого немає `getId()`: код
+`m.put(entity.getId(), entity)` не компілюється з помилкою `cannot find symbol: method
+getId()`. Обмеження також не дає створити сервіс для довільного типу (наприклад,
+`CRUDService<String>`).
+
+**InMemoryCrudService.** Один узагальнений клас без змін працює з `Book` і `Reader`
+(`InMemoryCrudService<Book>`, `InMemoryCrudService<Reader>`); параметр конструктора лише
+додає назву сутності в повідомлення. Сховище — `LinkedHashMap<Long, T>`: пошук за id за
+O(1); повторний `save` з тим самим id замінює запис (кількість не зростає); порядок вставки
+зберігається, і виведення передбачуване. Типізація перевіряється під час компіляції:
+`bookService.save(reader)` не компілюється (`Reader cannot be converted to Book`).
+
+**Демонстрація (пункт меню 18):** додавання, оновлення існуючого запису, успішний і
+неуспішний `delete`, пошук неіснуючого id з обробкою винятку, та сама робота з `Reader`.
+
+
+### Рівень 2
+
+**Сортування за назвою: `Comparator`, а не `Comparable`.** `findAllSortedByName()` живе в
+`InMemoryCrudService` (поле `name` є в `BaseEntity`, тому метод доступний будь-якому `T`).
+Я вибрав `Comparator`, бо:
+- `Comparable` задає один «природний» порядок усередині класу, а в сутностей його немає:
+  `Book` можна впорядкувати за назвою, ціною, роком, а `Reader` за іменем чи роком народження;
+- мені потрібні кілька порядків, які легко комбінуються й не вимагають змінювати класи
+  сутностей: `Comparator.comparing(Book::getName, NAME_ORDER).thenComparingDouble(Book::getPrice)`;
+- спосіб порівняння назв підставляється окремо: природний порядок `String` ставить великі літери
+  перед малими, а `Є`, `І`, `Ї` перед `А` (перевірено: `[Intermezzo, Єва, Ємець, Іван, Їжак, Алгебра, ...]`),
+  а `Collator` для `uk-UA` без урахування регістру дає український алфавітний порядок;
+- `compareTo` за назвою в `BaseEntity` був би гіршим: порожній другий ключ, `compareTo == 0`
+  для різних сутностей і неузгодженість з `equals` за `id`.
+
+**Інтерфейс сутності й чому не в `CRUDService<T>`.** Метод
+`findAllSortedByNameAndByPrice()` / `...ByYearOfBirth()` залежить від поля конкретної сутності:
+друге поле сортування (ціна в `Book`, рік народження в `Reader`) існує лише в конкретному
+класі, а в узагальненому `CRUDService<T>` компілятор знає про `T` тільки `id` і `name`.
+Тому `BookService extends CRUDService<Book>` і `ReaderService extends CRUDService<Reader>`
+додають метод сортування, а `InMemoryBookService extends InMemoryCrudService<Book> implements BookService`
+успадковує сховище та CRUD і дописує лише сортування. Клієнт, якому потрібен лише CRUD,
+залежить від `CRUDService<T>`.
+
+**Методи сортування не змінюють сховище.** Вони беруть `findAll()` (нова `ArrayList`) і
+сортують цю копію; порядок і склад `LinkedHashMap` не змінюються, а `sorted.clear()` не
+торкається сховища. Копія неглибока: елементи ті самі об'єкти, тож зміна поля об'єкта
+через відсортований список змінить його і в сховищі. Демонстрація: пункт меню 19, тестові дані містять
+дві книги «Кобзар» (250 і 90 грн) і дві читачки «Катерина» (2003 і 1998).
+
+**Вибір колекції для сховища.**
+
+| Структура | `findById` | `save` (нова / оновлення) | `delete` | Відсортований за назвою список | Порядок обходу |
+|---|---|---|---|---|---|
+| `ArrayList<T>` | O(n), лінійний пошук | O(n): щоб відрізнити оновлення, треба знайти запис (додавання в кінець O(1) амортизовано) | O(n): пошук і зсув | O(n log n): копія й `sort` | порядок вставки |
+| `HashMap<Long, T>` | O(1) у середньому | O(1) у середньому | O(1) у середньому | O(n log n): копія `values()` і `sort` | не визначений |
+| `LinkedHashMap<Long, T>` | O(1) у середньому | O(1) у середньому | O(1) у середньому | O(n log n) | порядок вставки |
+| `TreeMap<Long, T>` | O(log n) | O(log n) | O(log n) | O(n log n): обхід йде за `id`, не за назвою | за `id` |
+
+Обрано `LinkedHashMap<Long, T>`: основні операції CRUD (`findById`, `save`, `delete`) виконуються
+за O(1), повторний `save` з тим самим `id` заміняє запис, а порядок вставки робить вивід
+передбачуваним і дає стабільне сортування «до/після». `ArrayList` програє на пошуку й видаленні за `id`.
+`HashMap` так само швидкий, але порядок обходу не визначений. `TreeMap` тримає порядок за ключем,
+тобто за `id`, а не за назвою, тож відсортований за назвою список усе одно будується окремо за
+O(n log n). Дерево з порядком за назвою не підходить: назви не унікальні, а пошук був би не за `id`.
+Сортування викликається рідше за CRUD, тому його ціна O(n log n) прийнятна.
+
+**`equals()` і `hashCode()` за `id`.** У `BaseEntity` обидва методи визначені за `id` (і класом):
+однаковий `id` означає той самий запис. `Reader` успадковує їх без змін. Ієрархія `Book`
+свідомо лишає значеннєвий `equals` з ЛР6 (потрібен для пошуку за зразком, ЛР2, та демонстрації
+симетрії); сервіс `equals` не використовує, бо ключ сховища це `id`.
+
+**Чи узгоджений компаратор з `equals`.** Ні. `NAME_THEN_YEAR` (та `NAME_THEN_PRICE`) повертає 0
+для різних сутностей з однаковою назвою й другим полем, хоча `equals` для них `false`
+(різні `id`). Наслідок: у `TreeSet`/`TreeMap` з таким компаратором друга сутність вважалася б
+дублікатом і була б загублена (у демонстрації 1 елемент замість 2, `HashSet` за `equals` дає 2). Тому ці
+компаратори застосовуються лише для `List.sort`, який стабільний і нічого не відкидає. Щоб
+зробити порядок узгодженим з `equals` за `id`, достатньо додати останнім ключем
+`.thenComparingLong(BaseEntity::getId)`: тоді 0 повертається лише для однакового `id`
+(у демонстрації 2 елементи). Для `Book` через значеннєвий `equals` узгодженості немає й так.
+
+
+### Рівень 3
+
+**`findAllSorted(Comparator<? super T>)` і `default findAllSortedByName()`.** У `CRUDService<T>`
+додано метод `List<T> findAllSorted(Comparator<? super T> comparator)`; його реалізація в
+`InMemoryCrudService` копіює значення сховища й сортує копію, тож це єдина точка сортування.
+Обидва методи сортування реалізовано через неї: `findAllSortedByName()` (default-метод
+інтерфейсу: назва є в кожного `T`, бо `BaseEntity` її містить, тому реалізація не дублюється в
+класах і успадковується будь-яким майбутнім сервісом) та `findAllSortedByNameAndByPrice()` /
+`findAllSortedByNameAndByYearOfBirth()` (`findAllSorted(NAME_THEN_PRICE)` та
+`findAllSorted(NAME_THEN_YEAR)`).
+
+**Чому `Comparator<? super T>`, а не `Comparator<T>`.** Компаратор лише *споживає* елементи
+типу `T` (його метод `compare(T a, T b)` приймає їх на вхід), а споживачам відповідає
+`? super T` (принцип PECS: producer extends, consumer super). Компаратор, що вміє порівнювати
+будь-які `BaseEntity`, безперечно вміє порівнювати й дві `Book`, тож `Comparator<BaseEntity>` має
+підходити для `CRUDService<Book>` та `CRUDService<Reader>`. З параметром `Comparator<T>` це не
+працює (перевірено компілятором: `incompatible types: Comparator<BaseEntity> cannot be converted
+to Comparator<Book>`), і довелося б писати окремий компаратор для кожної сутності навіть для
+однакової логіки (за `id`, за назвою). У демо (пункт меню 20) один `Comparator<BaseEntity>`
+сортує і книги, і читачів. Той самий підхід у `List.sort(Comparator<? super E>)` самого JDK.
+
+**`printAll(Collection<? extends BaseEntity> items)`.** `List<Book>` не можна передати туди, де
+очікується `List<BaseEntity>`: узагальнення в Java інваріантні, і `List<Book>` не є підтипом
+`List<BaseEntity>`, хоча `Book` є підтипом `BaseEntity` (компілятор: `incompatible types:
+List<Book> cannot be converted to List<BaseEntity>`). Інакше через посилання `List<BaseEntity>`
+можна було б додати в список книг `Reader`, і наступне читання `Book b = books.get(i)` дало б
+`ClassCastException`. (Масиви ковариантні й ловлять це лише під час виконання через
+`ArrayStoreException`; узагальнення забороняють це ще на етапі компіляції.) Wildcard
+`? extends BaseEntity` робить колекцію ковариантною лише для читання: усередині методу елементи
+читаються як `BaseEntity`, а додавання заборонено (`items.add(reader)` не компілюється:
+`Reader cannot be converted to CAP#1`), тому небезпечних дій зробити не вдається. Саме тому
+`printAll` приймає `Collection<Book>`, `Set<Reader>` і `List<BaseEntity>` без змін. Параметр
+саме `Collection`, а не `List`, бо метод лише обходить елементи. Варіант
+`<E extends BaseEntity> void printAll(Collection<E>)` рівноцінний, але тип `E` більше ніде не
+використовується, тому wildcard простіший.
+
+   ### Тести
+
+   53 тести JUnit 5 покривають усі три рівні: `BaseEntity` (id, `equals`/`hashCode`),
+   `EntityNotFoundException`, `InMemoryCrudService` (save, оновлення без росту, delete,
+   findById), сортування (`findAllSorted`, `findAllSortedByName`, `...ByNameAndBy<Поле>`,
+   незмінність сховища, `Comparator<? super T>`, український порядок), узгодженість
+   компаратора з `equals` та `printAll`.
+
+   Запуск (потрібен JUnit Platform Console Standalone в папці `lib/`):
+
+   ```bash
+   mkdir -p lib
+   curl -L -o lib/junit-platform-console-standalone-1.10.2.jar \
+     https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar
+   ./run-tests.sh
+   ```
+
+   Помилки компіляції, на які посилається README (інваріантність `List<Book>` проти
+   `List<BaseEntity>`, відхилення `Comparator<BaseEntity>` при `Comparator<T>`), звичайним
+   тестом не перевіряються, бо такий код не збирається; їх я перевірив компілятором окремо.
